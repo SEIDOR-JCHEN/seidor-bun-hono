@@ -1,0 +1,24 @@
+{
+  "scripts": {
+    "dev": "NODE_ENV=development bun run --hot src/index.ts",
+    "start-test": "NODE_ENV=test bun run src/index.ts",
+    "start-prod": "NODE_ENV=production bun run src/index.ts",
+    "deploy-test": "NODE_ENV=test bun run scripts/deploy.ts",
+    "deploy-prod": "NODE_ENV=production bun run scripts/deploy.ts",
+    "undeploy-test": "NODE_ENV=test bun run scripts/undeploy.ts",
+    "undeploy-prod": "NODE_ENV=production bun run scripts/undeploy.ts",
+    "compile-test": "NODE_ENV=test bun build --compile --target=bun-windows-x64-modern src/index.ts --outfile bin/test/app-test-x64",
+    "compile-prod": "NODE_ENV=production bun build --compile --target=bun-windows-x64-modern src/index.ts --outfile bin/production/app-prod-x64",
+    "exec-test": "NODE_ENV=test ./bin/test/app-test-x64",
+    "exec-prod": "NODE_ENV=production ./bin/production/app-prod-x64"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.10.1",
+    "axios": "^1.7.2",
+    "hono": "^4.4.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
