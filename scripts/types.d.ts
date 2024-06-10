@@ -12,7 +12,8 @@ export type WinService = {
   }
   dependencies?: string[]
   serviceType?: 'SERVICE_WIN32_OWN_PROCESS' | 'SERVICE_INTERACTIVE_PROCESS'
-  logRotation?: 0 | 1
+  // logRotation?: 0 | 1
+  // logRotationOnline?: 0 | 1
   logMaxSize?: number
   logMaxTime?: number
   logErrorFile?: string

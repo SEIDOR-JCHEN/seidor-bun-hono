@@ -22,7 +22,7 @@ export const env = createEnv({
     SBO_DB_NAME: z.string().optional(),
 
     //Windows Service
-    SC_NAME: z.string(),
+    SC_NAME: z.string().optional(),
     SC_EXE: z.string().optional(),
     SC_EXE_DIR: z.string().optional(),
     SC_DISPLAY_NAME: z.string().optional(),
@@ -32,10 +32,11 @@ export const env = createEnv({
     SC_ACCOUNT_DOMAIN: z.string().optional(),
     SC_ACCOUNT_USERNAME: z.string().optional(),
     SC_ACCOUNT_PASSWORD: z.string().optional(),
-    SC_DEPENDENCIES: z.array(z.string()).optional(),
+    SC_DEPENDENCIES: z.string().optional(),
     SC_LOG_MAX_TIME: z.coerce.number().optional(),
     SC_LOG_MAX_SIZE: z.coerce.number().optional(),
-    SC_LOG_ROTATION: z.coerce.number().optional(),
+    // SC_LOG_ROTATION: z.coerce.number().optional(),
+    // SC_LOG_ROTATION_ONLINE: z.coerce.number().optional(),
     SC_LOG_ERROR: z.string().optional(),
     SC_LOG_OUTPUT: z.string().optional(),
   },
