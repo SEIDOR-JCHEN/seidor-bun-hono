@@ -28,6 +28,8 @@ try {
       throw new Error('Unknown environment')
   }
 
+  console.log('PD: If you dont see any windows pop up, please DO NOT use terminal in administator mode.')
+
   await $`${nssm} edit ${env.SC_NAME}`
 
   console.log(`
