@@ -7,8 +7,8 @@
     "deploy-prod": "NODE_ENV=production bun run scripts/deploy.ts",
     "undeploy-test": "NODE_ENV=test bun run scripts/undeploy.ts",
     "undeploy-prod": "NODE_ENV=production bun run scripts/undeploy.ts",
-    "compile-test": "NODE_ENV=test bun build --compile --target=bun-windows-x64-modern src/index.ts --outfile bin/test/app-test-x64",
-    "compile-prod": "NODE_ENV=production bun build --compile --target=bun-windows-x64-modern src/index.ts --outfile bin/production/app-prod-x64",
+    "compile-test": "bun build --compile --minify --sourcemap src/index.ts --outfile bin/test/app-test-x64",
+    "compile-prod": "bun build --compile --minify --sourcemap src/index.ts --outfile bin/production/app-prod-x64",
     "exec-test": "NODE_ENV=test ./bin/test/app-test-x64",
     "exec-prod": "NODE_ENV=production ./bin/production/app-prod-x64"
   },

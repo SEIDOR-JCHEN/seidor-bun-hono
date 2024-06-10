@@ -1,7 +1,7 @@
 import axios, { isAxiosError } from 'axios'
 import { env } from '../../env'
-import type { SLErrorResponse, ServiceLayerConfig, ServiceLayerSession } from '../../types/service-layer'
-import { SLEntityEnum } from './entities'
+import type { SLErrorResponse, ServiceLayerConfig, ServiceLayerSession } from '../../types/service-layer.type'
+import { SLEntityEnum } from './service-layer-entities'
 
 export default class ServiceLayer {
   private baseUrl: string
