@@ -1,5 +1,8 @@
 import { Hono } from 'hono'
 import { env } from './env'
+
+console.log('\n' + new Date().toISOString() + ' - Starting Application...\n')
+
 const app = new Hono()
 
 let welcome = 'Welcome to Seidor API! 🚀'
