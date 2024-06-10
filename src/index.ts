@@ -1,24 +1,24 @@
 import { Hono } from 'hono'
 import { env } from './env'
 
-console.log('\n' + new Date().toISOString() + ' - Starting Application...\n')
+console.log(new Date().toISOString() + ' - Starting Application...')
 
 const app = new Hono()
 
-let welcome = 'Welcome to Seidor API! 🚀'
+let welcome = 'Welcome to Seidor API!'
 
 switch (env.NODE_ENV) {
   case 'development':
-    welcome += ' 🚧 Development 🚧'
+    welcome += ' - 🚧 Development 🚧 '
     break
   case 'test':
-    welcome += ' 🧪 Test 🧪'
+    welcome += ' - 🧪 Test 🧪 '
     break
   case 'production':
-    welcome += ' 🚨 Production 🚨'
+    welcome += ' - 🚨 Production 🚨 '
     break
   default:
-    welcome += ' 🤷‍♂️ Unknown 🤷‍♂️'
+    welcome += ' - 🤷‍♂️ Unknown 🤷‍♂️ '
     break
 }
 
