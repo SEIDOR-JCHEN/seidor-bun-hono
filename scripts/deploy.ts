@@ -1,80 +1,95 @@
 import { $ } from 'bun'
 import { env } from '../src/env'
+import type { WinService } from './types'
 
-// ${nssm}  x64
 const nssm = 'resources/nssm-2.24/win64/nssm.exe'
 
-//use nssm to setup a service
+//Remove the last directory from the path (scripts)
+const baseDir = import.meta.dir.split('\\').reduce((acc, cur, idx, arr) => {
+  if (idx == arr.length - 1) return acc
+  return acc + cur + '\\'
+}, '')
 
-// if (env.SC_EXE) {
-//   await $`${nssm} set ${env.SC_NAME} Application ${env.SC_EXE_DIR}`
-// }
-
-// if (env.SC_EXE_DIR) {
-//   await $`${nssm} set ${env.SC_EXE_DIR} AppDirectory ${env.SC_EXE_DIR}`
-// }
-
-if (env.SC_DISPLAY_NAME) {
-  await $`${nssm} set ${env.SC_NAME} DisplayName ${env.SC_DISPLAY_NAME}`
-}
-
-if (env.SC_START) {
-  await $`${nssm} set ${env.SC_NAME} Start ${env.SC_START}`
-}
-
-if (env.SC_DEPENDENCIES) {
-  for (const dep of env.SC_DEPENDENCIES) {
-    await $`${nssm} set ${env.SC_NAME} DependOnService ${dep}`
-  }
-}
-
-if (env.SC_LOG_MAX_SIZE) {
-  await $`${nssm} set ${env.SC_NAME} AppRotateBytes ${env.SC_LOG_MAX_SIZE}`
-}
-
-if (env.SC_LOG_MAX_TIME) {
-  await $`${nssm} set ${env.SC_NAME} AppRotateSeconds ${env.SC_LOG_MAX_TIME}`
-}
-
-if (env.SC_LOG_ROTATION) {
-  await $`${nssm} set ${env.SC_NAME} AppRotateFiles  ${env.SC_LOG_ROTATION}`
-}
-
-if (env.SC_LOG_ERROR) {
-  await $`${nssm} set ${env.SC_NAME} AppStderr ${env.SC_LOG_ERROR}`
-}
-
-if (env.SC_LOG_OUTPUT) {
-  await $`${nssm} set ${env.SC_NAME} AppStdout ${env.SC_LOG_OUTPUT}`
-}
+let appName = ''
+let appDir = ''
+let appExe = ''
 
 const envMode = env.NODE_ENV
-
 let envFile: string = ''
-
-// let service: WinService = {
-//   name: process.env['SERVICE_NAME']!,
-//   description: process.env['SERVICE_DESCRIPTION']!,
-//   displayName: process.env['SERVICE_DISPLAY_NAME'],
-//   binaryPath: process.env['SERVICE_EXE']!,
-//   dependencies: ['B1LicenseService', 'b1s50000'],
-//   errorControl: 'normal',
-
-//   loadOrderGroup: 'Network',
-// }
 
 switch (envMode) {
   case 'test':
-    console.log('Test')
     envFile = '.env.test'
+    appName = 'app-test-x64.exe'
+    appDir = baseDir + 'bin\\test'
+    appExe = `${appDir}\\${appName}`
     break
   case 'production':
-    console.log('Production')
     envFile = '.env.production'
+    appName = 'app-prod-x64.exe'
+    appDir = baseDir + 'bin\\production'
+    appExe = `${appDir}\\${appName}`
     break
   default:
-    console.log('Unknown')
     throw new Error('Unknown environment')
+}
+
+const outputLog = `${appDir}\\logs\\outputs`
+const errorLog = `${appDir}\\logs\\errors`
+
+await $`mkdir ${appDir}\\logs`
+await $`mkdir ${outputLog}`
+await $`mkdir ${errorLog}`
+
+let serviceStatus = ''
+
+try {
+  serviceStatus = await $`${nssm} status ${env.SC_NAME}`.text()
+  serviceStatus = serviceStatus.trim().replaceAll('\n', '')
+
+  console.log(`Current service status: ${serviceStatus}`)
+} catch (error: any) {
+  if (error.exitCode == 3) {
+    console.log('Service not found, installing...')
+    await $`${nssm} install ${env.SC_NAME} ${appExe}`
+  }
+}
+
+let service: WinService = {
+  name: env.SC_NAME,
+  exe: appExe,
+  exeDir: appDir,
+  description: env.SC_DESCRIPTION,
+  displayName: env.SC_DISPLAY_NAME,
+  // dependencies: ['B1LicenseService', 'b1s50000'],
+  dependencies: env.SC_DEPENDENCIES ?? [],
+  startType: env.SC_START ? env.SC_START : 'SERVICE_DELAYED_AUTO_START',
+  logRotation: env.SC_LOG_ROTATION ? 1 : 0,
+  logMaxSize: env.SC_LOG_MAX_SIZE ? env.SC_LOG_MAX_SIZE : 1048576,
+  logMaxTime: env.SC_LOG_MAX_TIME ? env.SC_LOG_MAX_TIME : 86400,
+  logErrorFile: env.SC_LOG_ERROR ? errorLog + '\\error.txt' : '',
+  logOutputFile: env.SC_LOG_OUTPUT ? outputLog + '\\output.txt' : '',
+}
+
+await $`${nssm} set ${service.name} Application ${service.exe}`
+await $`${nssm} set ${service.name} AppDirectory ${service.exeDir}`
+await $`${nssm} set ${service.name} Description ${service.description}`
+await $`${nssm} set ${service.name} DisplayName ${service.displayName}`
+await $`${nssm} set ${service.name} Start ${service.startType}`
+await $`${nssm} set ${service.name} AppRotateFiles  ${service.logRotation}`
+await $`${nssm} set ${service.name} AppRotateBytes ${service.logMaxSize}`
+await $`${nssm} set ${service.name} AppRotateSeconds ${service.logMaxTime}`
+
+if (service.logErrorFile) {
+  await $`${nssm} set ${service.name} AppStderr ${service.logErrorFile}`
+}
+
+if (service.logOutputFile) {
+  await $`${nssm} set ${service.name} AppStdout ${service.logOutputFile}`
+}
+
+for (const dep of service.dependencies ?? []) {
+  await $`${nssm} set ${env.SC_NAME} DependOnService ${dep}`
 }
 
 const file = Bun.file(envFile)
@@ -86,7 +101,7 @@ let serviceEnvs = ''
 text.split('\n').map(async (line) => {
   const [key, value] = line.split('=')
   if (key && value) {
-    if (key.trim().startsWith('#') || key.trim().startsWith('SC')) return
+    if (key.trim().startsWith('#')) return
     serviceEnvs += `${key.trim()}=${value.trim()}\n`
     console.log(`Env: ${key.trim()}=${value.trim()}`)
   }
@@ -94,6 +109,6 @@ text.split('\n').map(async (line) => {
 
 await $`${nssm} set ${env.SC_NAME} AppEnvironmentExtra ${serviceEnvs}`
 
-await $`${nssm} restart ${env.SC_NAME}`
+console.log('Finished setting up service!')
 
-await $`echo "Finished setting up service!"`
+await $`${nssm} restart ${env.SC_NAME}`
