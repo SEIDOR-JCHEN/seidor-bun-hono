@@ -1,4 +1,4 @@
-import { $ } from 'bun'
+import { $, type BunFile } from 'bun'
 import { env } from '../src/env'
 import type { WinService } from './types'
 
@@ -17,9 +17,11 @@ try {
 
   const envMode = env.NODE_ENV
   let envFile: string = ''
+  let envLocalFile: string = ''
 
   switch (envMode) {
     case 'test':
+      envLocalFile = '.env.test.local'
       envFile = '.env.test'
       appName = 'app-test-x64.exe'
       appDir = baseDir + 'bin\\test'
@@ -38,6 +40,7 @@ try {
     `)
       break
     case 'production':
+      envLocalFile = '.env.production.local'
       envFile = '.env.production'
       appName = 'app-prod-x64.exe'
       appDir = baseDir + 'bin\\production'
@@ -90,7 +93,7 @@ try {
     exeDir: appDir,
     description: env.SC_DESCRIPTION ? env.SC_DESCRIPTION : env.SC_NAME,
     displayName: env.SC_DISPLAY_NAME ? env.SC_DISPLAY_NAME : env.SC_NAME,
-    dependencies: env.SC_DEPENDENCIES?.split(',') ?? [],
+    dependencies: env.SC_DEPENDENCIES,
     startType: env.SC_START ? env.SC_START : 'SERVICE_DELAYED_AUTO_START',
     logMaxSize: env.SC_LOG_MAX_SIZE ? env.SC_LOG_MAX_SIZE : 1048576,
     logMaxTime: env.SC_LOG_MAX_TIME ? env.SC_LOG_MAX_TIME : 86400,
@@ -126,13 +129,14 @@ try {
     await $`${nssm} set ${service.name} AppStdout ${service.logOutputFile}`
   }
 
+  const depList = service.dependencies?.split(',')
   let deps = ''
-
-  for (const dep of service.dependencies ?? []) {
-    deps += `${dep.trim() + '\n'}`
+  if (depList && depList.length > 0) {
+    for (const dep of depList) {
+      deps += `${dep.trim() + '\n'}`
+    }
+    await $`${nssm} set ${env.SC_NAME} DependOnService ${deps}`
   }
-
-  await $`${nssm} set ${env.SC_NAME} DependOnService ${deps}`
 
   console.log('\n**************************************************************************\n')
 
@@ -146,7 +150,14 @@ try {
 
   console.log('\n**************************************************************************\n')
 
-  const file = Bun.file(envFile)
+  let file: BunFile
+
+  if (await Bun.file(envLocalFile).exists()) {
+    file = Bun.file(envLocalFile)
+  } else {
+    file = Bun.file(envFile)
+  }
+
   const text = await file.text()
   let serviceEnvs = ''
 

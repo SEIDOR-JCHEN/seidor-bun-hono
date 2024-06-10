@@ -10,7 +10,7 @@ export type WinService = {
     username: string
     password: string
   }
-  dependencies?: string[]
+  dependencies?: string
   serviceType?: 'SERVICE_WIN32_OWN_PROCESS' | 'SERVICE_INTERACTIVE_PROCESS'
   // logRotation?: 0 | 1
   // logRotationOnline?: 0 | 1
